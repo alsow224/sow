@@ -1,0 +1,66 @@
+# Des experts que vous connaissez peut-être
+# first idea : est de suggérer qu'un utilisateur peut connaître les amis de ses amis. 
+
+def friends_of_friend_ids_bad(user):
+    # "foaf" est l'abréaviation de "friend of a friend", autrement dit " ami d'un ami "
+    return [foaf["id"]
+           for friend in user["friends"]    # pour chaque ami de l'utilisateur
+           for for foaf in friend["friends"]] #obtenir chacun de leurs amis_their_friends
+# Quand on appelle la fonction sur users[0] (Hero), on récupère: [0, 2, 3, 0, 1, 3]
+
+print [friend["id"] for friend in users[0]["friends"]] # [1, 2]
+print [friend["id"] for friend in users[1]["friends"]] # [0, 2, 3]
+print [friend["id"] for friend in users[2]["friends"]] # [0, 1, 3]
+
+# amis d'amis de plusieurs manières semble être une information intéressante, donc nous devrions plûtot compter les amis communs.
+# Nous allons utiliser une fonction supplémentaire pour exclure des personnes déjà connues de l'utilisateur:
+
+from collections import Counter # n'est pas chargé par défaut 
+
+def not_the_same(user, other_user):
+    """deux utilisateurs ne sont pas le même s'ils ont des identifiants différents"""
+    return user["id"] != other_user["id"]
+
+def not_friends(user, other_user):
+    """l'autre utilisateur n'est pas un ami s'il n'est pas dans user["friends"];"""
+    return all(not_the_same(friend, other_user)
+              for friend in user ["friends"])
+
+def friends_of_friend_ids(user):
+    return Counter(foaf["id"]
+                   for friend in user ["friends"]     # pour chacun de mes ami
+                   for foaf in friend["friends"]      # compter *leurs* amis
+                   if not_the_same(user, foaf)        # ceux qui ne sont pas moi 
+                                   and not_friends(user, foaf)) # et ne sont pas mes amis
+print friends_of_friend_ids(users[3])                 # compteur({0: 2, 5: 1})
+
+# Chi(3) a deux amis communs avec Hero(id0), mais seulement un avec Clive(id 5).
+
+# Les utilisateurs partageant mes centres d'intérêts; l'aspect <<Domaines de prédilection>>
+
+# liste de paires (user_id, interest):
+
+interests = [
+    (0, "Hadoop"), (0, "Big Data"), (0, "HBase"), (0, "Java"), 
+    (0, "Spark"), (0, "Storm"), (0, "Cassandra"),
+    (1, "NoSQL"), (1, "MongoDB"), (1, "Cassandra"), (1, "HBase"), 
+    (1, "Postgres"), (2, "Python"), (2, "scikit-learn"), (2, "scipy")
+    (2, "numpy"), (2, "statsmodels"), (2, "pandas"), (3, "R"), (3, "Python"), 
+    (3, "statistics"), (3, "regression"), (3, "probability"), 
+    (4, "machine learning"), (4, "regression"),(4, "decision trees"),
+    (4, "libsvm"), (5, "Python"),(5, "R"), (5, "Java"), (5, "C++"), 
+    (5, "Haskell"), (5, "programming languages"), (6, "statistics"),
+    (6, "probability"), (6, "mathematics"), (6, "statistics"), 
+    (7, "machine learning"), (7, "scikit-learn"), (7, "Mahout"),
+    (7, "neural networks"), (8, "deep learning"),
+    (8, "Big Data"), (8, "artificial intelligence"), (9, "Hadoop"),
+    (9, "Java"), (9, "MapReduce"), (9, "Big Data"),
+]
+
+# Par exemple, Hero (id0) n'a aucun ami commun avec Klein(id9), mais ils partagent un meme centre d'intérêt qui est l'apprentissage automatique 
+
+# Trouvons une fonction qui trouve les utilisateurs partageant un sujet donné:
+def data_scientists_who_like(target_interest):
+    return [user_id
+            for user_id, user_interest in interests
+            if user_interest == target_interest]
